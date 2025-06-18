@@ -1,0 +1,230 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "AWS Server Creator";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0"><i class="fas fa-server"></i> AWS Server Creator</h2>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-triangle"></i> @Model.ErrorMessage
+                        </div>
+                    }
+                    
+                    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+                    {
+                        <div class="alert alert-success" role="alert">
+                            <i class="fas fa-check-circle"></i> @Model.SuccessMessage
+                        </div>
+                    }
+
+                    <form method="post" enctype="multipart/form-data">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5><i class="fab fa-aws"></i> AWS Credentials</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label for="AccessKey" class="form-label">Access Key ID</label>
+                                            <input type="text" class="form-control" id="AccessKey" 
+                                                   asp-for="Request.AwsConfig.AccessKey" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label for="SecretKey" class="form-label">Secret Access Key</label>
+                                            <input type="password" class="form-control" id="SecretKey" 
+                                                   asp-for="Request.AwsConfig.SecretKey" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label for="Region" class="form-label">AWS Region</label>
+                                    <select class="form-control" id="Region" asp-for="Request.AwsConfig.Region">
+                                        <option value="us-east-1">US East (N. Virginia)</option>
+                                        <option value="us-west-2">US West (Oregon)</option>
+                                        <option value="eu-west-1">Europe (Ireland)</option>
+                                        <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
+                                        <option value="ap-northeast-1">Asia Pacific (Tokyo)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5><i class="fas fa-cogs"></i> Server Configuration</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="radio" name="configType" 
+                                           id="standardConfig" value="standard" checked 
+                                           onchange="toggleConfigType()">
+                                    <label class="form-check-label" for="standardConfig">
+                                        Use Standard Configuration
+                                    </label>
+                                </div>
+                                
+                                <div id="standardConfigSection">
+                                    <div class="row">
+                                        @for (int i = 0; i < Model.StandardConfigurations.Count; i++)
+                                        {
+                                            <div class="col-md-6 mb-3">
+                                                <div class="card config-card" onclick="selectConfig(@i)">
+                                                    <div class="card-body">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" 
+                                                                   name="StandardConfigId" value="@i" id="config@(i)"
+                                                                   asp-for="Request.StandardConfigId">
+                                                            <label class="form-check-label" for="config@(i)">
+                                                                <strong>@Model.StandardConfigurations[i].Name</strong><br>
+                                                                <small class="text-muted">
+                                                                    Type: @Model.StandardConfigurations[i].InstanceType<br>
+                                                                    @Model.StandardConfigurations[i].Description
+                                                                </small>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="radio" name="configType" 
+                                           id="customConfig" value="custom" onchange="toggleConfigType()">
+                                    <label class="form-check-label" for="customConfig">
+                                        Custom Configuration
+                                    </label>
+                                </div>
+
+                                <div id="customConfigSection" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label for="ServerName" class="form-label">Server Name</label>
+                                                <input type="text" class="form-control" id="ServerName" 
+                                                       asp-for="Request.ServerConfig.Name">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label for="InstanceType" class="form-label">Instance Type</label>
+                                                <select class="form-control" id="InstanceType" 
+                                                        asp-for="Request.ServerConfig.InstanceType">
+                                                    <option value="t2.micro">t2.micro</option>
+                                                    <option value="t3.small">t3.small</option>
+                                                    <option value="t3.medium">t3.medium</option>
+                                                    <option value="t3.large">t3.large</option>
+                                                    <option value="m5.large">m5.large</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label for="AmiId" class="form-label">AMI ID</label>
+                                        <input type="text" class="form-control" id="AmiId" 
+                                               asp-for="Request.ServerConfig.AmiId" 
+                                               placeholder="ami-0c55b159cbfafe1d0">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5><i class="fas fa-key"></i> SSH Key Pair</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="radio" name="keyPairOption" 
+                                           id="createNewKey" value="create" checked 
+                                           onchange="toggleKeyPairOption()">
+                                    <label class="form-check-label" for="createNewKey">
+                                        <strong>Создать новую пару ключей</strong>
+                                        <small class="d-block text-muted">AWS создаст новую пару ключей автоматически</small>
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="radio" name="keyPairOption" 
+                                           id="useExistingKey" value="existing" 
+                                           onchange="toggleKeyPairOption()">
+                                    <label class="form-check-label" for="useExistingKey">
+                                        <strong>Использовать существующий ключ AWS</strong>
+                                        <small class="d-block text-muted">Укажите имя существующей пары ключей в AWS</small>
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="radio" name="keyPairOption" 
+                                           id="uploadPublicKey" value="upload" 
+                                           onchange="toggleKeyPairOption()">
+                                    <label class="form-check-label" for="uploadPublicKey">
+                                        <strong>Загрузить приватный ключ</strong>
+                                        <small class="d-block text-muted">Загрузите файл .pem с приватным ключом</small>
+                                    </label>
+                                </div>
+
+                                <div id="existingKeySection" style="display: none;">
+                                    <div class="form-group mb-3">
+                                        <label for="ExistingKeyName" class="form-label">Имя существующего ключа</label>
+                                        <input type="text" class="form-control" id="ExistingKeyName" 
+                                               asp-for="Request.ExistingKeyName" 
+                                               placeholder="my-existing-key">
+                                        <small class="form-text text-muted">
+                                            Введите имя пары ключей, которая уже существует в вашем AWS аккаунте
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <div id="uploadKeySection" style="display: none;">
+                                    <div class="form-group mb-3">
+                                        <label for="KeyFile" class="form-label">Загрузить приватный ключ (.pem файл)</label>
+                                        <div class="input-group">
+                                            <input type="file" class="form-control" id="KeyFile" 
+                                                   asp-for="Request.KeyFile" accept=".pem">
+                                            <label class="input-group-text" for="KeyFile">
+                                                <i class="fas fa-upload"></i> Выбрать файл
+                                            </label>
+                                        </div>
+                                        <small class="form-text text-muted">
+                                            Загрузите файл с расширением .pem, содержащий ваш приватный SSH ключ
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-info mt-3">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>Важно:</strong> 
+                                    <ul class="mb-0 mt-2">
+                                        <li>Если создаете новый ключ, AWS автоматически сгенерирует пару ключей</li>
+                                        <li>Приватный ключ (.pem файл) будет доступен для скачивания только один раз</li>
+                                        <li>Сохраните приватный ключ в безопасном месте для подключения к серверу</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-rocket"></i> Create Server
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
